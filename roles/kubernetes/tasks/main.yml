@@ -9,7 +9,7 @@
     - curl
 
 
-- name: "Getting kubernetes package key"
+- name: "Getting kubernetes package"
   shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 
 - shell: |
@@ -28,5 +28,5 @@
     - kubectl
     - selinux-utils
 
-- name: Finish Installation
+- name: Finishing Installation
   command: apt-mark hold kubelet kubeadm kubectl

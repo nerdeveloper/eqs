@@ -1,13 +1,25 @@
-kube_version: v1.19.2
-
 pod_network_cidr: "10.244.0.0/16"
 
 token: b0f7b8.8d1767876297d85c
 
-
-# Network implementation('flannel', 'calico', 'canal')
-network: calico
+service_cidr: "10.96.0.0/12"
 
 network_interface: ""
 
 master_ip: 192.168.0.17
+
+kubeadmin_config: /etc/kubernetes/admin.conf
+
+
+init_opts: ""
+
+# Any other additional opts you want to add..
+kubeadm_opts: ""
+# For example:
+# kubeadm_opts: '--apiserver-cert-extra-sans "k8s.domain.com,kubernetes.domain.com"'
+
+create_containers: 1
+default_container_name: jenkins
+default_container_image: jenkins/jenkins:lts
+ports:
+ - "8080:8080"

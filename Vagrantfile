@@ -10,10 +10,10 @@ Vagrant.configure("2") do |config|
     ]
   end
 
-  config.vm.define "kubernetes-worker" do  |worker|
-      worker.vm.box = "ubuntu/bionic64"
-      worker.vm.hostname = "kubernetes-worker"
-      worker.vm.network "public_network", ip: "192.168.0.18",  bridge: [
+  config.vm.define "ubuntu" do  |ubuntu|
+      ubuntu.vm.box = "ubuntu/bionic64"
+      ubuntu.vm.hostname = "ubuntu"
+      ubuntu.vm.network "public_network", ip: "192.168.0.18",  bridge: [
           "en0: Wi-Fi (Wireless)",
           "bridge0"
           ]
@@ -33,7 +33,10 @@ Vagrant.configure("2") do |config|
     ansible.verbose = true
     ansible.groups = {
          "master" =>  ["kubernetes-master"],
-         "worker"  => ["kubernetes-worker"]
+         "ubuntu"  => ["ubuntu"],
+         "kube-cluster:children" => ["master", "ubuntu"]
+
+
    }
 
 

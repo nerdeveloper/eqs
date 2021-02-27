@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: kube-cluster
   become: yes
   gather_facts: yes
   tasks:
@@ -20,18 +20,8 @@
         state: present
       run_once: True
 
-    - name: Disable swappiness and pass bridged IPv4 traffic to iptable's chains
-      run_once: True
-      sysctl:
-        name: "{{ item.name }}"
-        value: "{{ item.value }}"
-        state: present
-      with_items:
-        - { name: 'vm.swappiness', value: '0' }
-        - { name: 'net.bridge.bridge-nf-call-iptables', value: '1' }
 
-
-- hosts: all
+- hosts: master
   become: yes
   gather_facts: yes
   become_user: root
@@ -51,36 +41,51 @@
       register: reset_cluster
       ignore_errors: True
 
-    - name: Delete flannel.1 interface
-      command: ip link delete flannel.1
-      when: reset_cluster is succeeded
-      ignore_errors: True
 
     - name: Initializing kubernetes
       register: init_cluster
       when: reset_cluster is succeeded
-      command: kubeadm init --pod-network-cidr={{ pod_network_cidr }} --apiserver-cert-extra-sans {{ master_ip }}  --token {{ token }}
+      shell:
+        kubeadm init --service-cidr {{ service_cidr }} \
+          --pod-network-cidr {{ pod_network_cidr }} \
+          --token {{ token }} \
+          --apiserver-advertise-address {{ master_ip }} \
+          {{ kubeadm_opts }} \
+          {{ init_opts }}
 
-    - name: "Configuring kubectl"
-      run_once: true
+
+    - name: Create Kubernetes config directory
+      file:
+        path: ".kube/"
+        state: directory
+
+    - name: "Configuring kubectl for Root User"
       shell: mkdir -p $HOME/.kube;cp /etc/kubernetes/admin.conf $HOME/.kube/config;chown $(id -u):$(id -g) $HOME/.kube/config
+
+    - name: Copy admin.conf to Home directory
+      when: init_cluster is succeeded
+      copy:
+        src: "{{ kubeadmin_config }}"
+        dest: ".kube/config"
+        owner: "{{ ansible_user | default(ansible_user_id) }}"
+        group: "{{ ansible_user | default(ansible_user_id) }}"
+        mode: 0755
+        remote_src: true
 
     - name: Configuring Kubernetes Network
       shell: |
         kubectl apply -f  https://docs.projectcalico.org/v3.10/manifests/canal.yaml
       when: init_cluster is succeeded
 
+    - name: Configuring single node cluster
+      shell: kubectl taint nodes --all node-role.kubernetes.io/master-
 
-- hosts: worker
-  vars_files:
-    - group_vars/all.yml
+
+- hosts: ubuntu
   become_user: root
   gather_facts: yes
   become: yes
   tasks:
-    - name: Join to Kubernetes cluster
-      shell: |
-        kubeadm join --token {{ token }} \
-                    --discovery-token-unsafe-skip-ca-verification \
-                    {{ master_ip }}:6443
-      register: join_cluster
+    - name: Run Jenkins in a container
+      shell: docker run -d -p 8080:8080 jenkins/jenkins:lts
+
