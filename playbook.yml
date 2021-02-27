@@ -1,0 +1,86 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: "apt update"
+      apt:
+          update_cache: yes
+          cache_valid_time: 3600
+    - name: Disable system swap
+      shell: "swapoff -a"
+      run_once: True
+
+    - name: Remove current swaps from fstab
+      lineinfile:
+        dest: /etc/fstab
+        regexp: '(?i)^([^#][\S]+\s+(none|swap)\s+swap.*)'
+        line: '# \1'
+        backrefs: yes
+        state: present
+      run_once: True
+
+    - name: Disable swappiness and pass bridged IPv4 traffic to iptable's chains
+      run_once: True
+      sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+      with_items:
+        - { name: 'vm.swappiness', value: '0' }
+        - { name: 'net.bridge.bridge-nf-call-iptables', value: '1' }
+
+
+- hosts: all
+  become: yes
+  gather_facts: yes
+  become_user: root
+  roles:
+    - { role: docker, tags: ['docker']}
+    - { role: kubernetes, tags: ['kubernetes']}
+
+- hosts: master
+  vars_files:
+    - group_vars/all.yml
+  become_user: root
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: Reset Kubernetes
+      shell: kubeadm reset --force
+      register: reset_cluster
+      ignore_errors: True
+
+    - name: Delete flannel.1 interface
+      command: ip link delete flannel.1
+      when: reset_cluster is succeeded
+      ignore_errors: True
+
+    - name: Initializing kubernetes
+      register: init_cluster
+      when: reset_cluster is succeeded
+      command: kubeadm init --pod-network-cidr={{ pod_network_cidr }} --apiserver-cert-extra-sans {{ master_ip }}  --token {{ token }}
+
+    - name: "Configuring kubectl"
+      run_once: true
+      shell: mkdir -p $HOME/.kube;cp /etc/kubernetes/admin.conf $HOME/.kube/config;chown $(id -u):$(id -g) $HOME/.kube/config
+
+    - name: Configuring Kubernetes Network
+      shell: |
+        kubectl apply -f  https://docs.projectcalico.org/v3.10/manifests/canal.yaml
+      when: init_cluster is succeeded
+
+
+- hosts: worker
+  vars_files:
+    - group_vars/all.yml
+  become_user: root
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: Join to Kubernetes cluster
+      shell: |
+        kubeadm join --token {{ token }} \
+                    --discovery-token-unsafe-skip-ca-verification \
+                    {{ master_ip }}:6443
+      register: join_cluster

@@ -1,0 +1,32 @@
+---
+- name: Install required system packages
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  loop:
+    - apt-transport-https
+    - curl
+
+
+- name: "Getting kubernetes package key"
+  shell: curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+
+- shell: |
+    cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    deb https://apt.kubernetes.io/ kubernetes-xenial main
+    EOF
+
+- name: Installing Kubernetes
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+    - selinux-utils
+
+- name: Finish Installation
+  command: apt-mark hold kubelet kubeadm kubectl

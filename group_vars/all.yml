@@ -1,0 +1,13 @@
+kube_version: v1.19.2
+
+pod_network_cidr: "10.244.0.0/16"
+
+token: b0f7b8.8d1767876297d85c
+
+
+# Network implementation('flannel', 'calico', 'canal')
+network: calico
+
+network_interface: ""
+
+master_ip: 192.168.0.17
