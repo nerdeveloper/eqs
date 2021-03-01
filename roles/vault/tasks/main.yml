@@ -1,0 +1,60 @@
+---
+
+# From url
+- name: Deploy HashiCorp Vault from url
+  command: "{{ item }}"
+  with_items:
+    - helm repo add vault https://helm.releases.hashicorp.com
+    - helm install vault vault/vault --atomic  --set "server.dev.enabled=true"
+  ignore_errors: True
+
+
+- name: Creating secrets, Authentication, Service Accounts for MySQL POD and application for Kubernetes
+  script: files/script.sh
+  ignore_errors: True
+
+- name: "Create tmp directory"
+  file:
+    path: "{{ tmp_dir }}"
+    state: directory
+    mode: 0755
+
+- name: "Copy Mysql Deployment file"
+  copy:
+    src: "mysql-deployment.yaml"
+    dest: "{{ tmp_dir }}/mysql-deployment.yaml"
+    mode: 0644
+
+- name: "mysql configuration"
+  shell: "kubectl apply -f {{ tmp_dir }}/mysql-deployment.yaml"
+
+
+- name: Installing MySQL Service
+  copy:
+    src: "service.yaml"
+    dest: "{{ tmp_dir }}/service.yaml"
+    mode: 0644
+
+
+- name: Installing MySQL PV
+  copy:
+    src: "pv.yaml"
+    dest: "{{ tmp_dir }}/pv.yaml"
+    mode: 0644
+
+- name: Installing MySQL PVC
+  copy:
+    src: "pvc.yaml"
+    dest: "{{ tmp_dir }}/pvc.yaml"
+    mode: 0644
+
+- name: "mysql configuration"
+  command: "{{ item }}"
+  with_items:
+    - "kubectl apply -f {{ tmp_dir }}/service.yaml"
+    - "kubectl apply -f {{ tmp_dir }}/pv.yaml"
+    - "kubectl apply -f {{ tmp_dir }}/pvc.yaml"
+  ignore_errors: True
+
+
+

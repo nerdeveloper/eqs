@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: mysql
+spec:
+    selector:
+      matchLabels:
+        app: mysql
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: mysql
+#        annotations:
+#          vault.hashicorp.com/agent-inject: "true"
+#          vault.hashicorp.com/tls-skip-verify: "true"
+#          vault.hashicorp.com/role: "internal-app"
+#          vault.hashicorp.com/agent-inject-secret-database-config: "internal/data/database/config"
+#          vault.hashicorp.com/agent-inject-template-database-config: |
+#            {{- with secret "internal/data/database/config" -}}
+#            {
+#              "MYSQL_ROOT_PASSWORD" : "{{ .Data.password }}"
+#            }
+#            {{- end }}
+      spec:
+        containers:
+          - image: mysql:5.6
+            name: mysql
+            env:
+              # Use secret in real usage
+              - name: MYSQL_ROOT_PASSWORD
+                value: admin
+            ports:
+              - containerPort: 3306
+                name: mysql
+
+            volumeMounts:
+              - name: mysql-persistent-storage
+                mountPath: /var/lib/mysql
+        volumes:
+          - name: mysql-persistent-storage
+            persistentVolumeClaim:
+              claimName: mysql-pv-claim

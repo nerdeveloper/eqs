@@ -23,3 +23,9 @@ default_container_name: jenkins
 default_container_image: jenkins/jenkins:lts
 ports:
  - "8080:8080"
+
+
+username: admin
+password: admin
+
+tmp_dir: /tmp/kubeadm-ansible-files

@@ -7,27 +7,37 @@
       apt:
           update_cache: yes
           cache_valid_time: 3600
-    - name: Disable system swap
-      shell: "swapoff -a"
-      run_once: True
-
-    - name: Remove current swaps from fstab
-      lineinfile:
-        dest: /etc/fstab
-        regexp: '(?i)^([^#][\S]+\s+(none|swap)\s+swap.*)'
-        line: '# \1'
-        backrefs: yes
-        state: present
-      run_once: True
-
 
 - hosts: master
   become: yes
   gather_facts: yes
   become_user: root
-  roles:
-    - { role: docker, tags: ['docker']}
-    - { role: kubernetes, tags: ['kubernetes']}
+  tasks:
+    - name: Check if docker is installed
+      shell: command -v docker >/dev/null 2>&1
+      register: is_docker_exist
+      ignore_errors: yes
+
+    - name: Check if kubeadm is installed
+      shell: command -v kubeadm >/dev/null 2>&1
+      register: is_kubeadm_exist
+      ignore_errors: yes
+
+    - debug: var=is_docker_exist
+
+    - debug: var=is_kubeadm_exist
+
+    - name: Installing Docker
+      include_role:
+        name: docker
+      when: is_docker_exist.rc != 0
+      tags: docker
+#
+    - name: Installing Kubernetes
+      include_role:
+        name: kubernetes
+      when: is_kubeadm_exist.rc != 0
+      tags: kubernetes
 
 - hosts: master
   vars_files:
@@ -36,15 +46,26 @@
   gather_facts: yes
   become: yes
   tasks:
+
+    - name: check service
+      service_facts:
+
+    - name: try to work out how to access the service
+      debug:
+            var: ansible_facts.services["kubelet.service"]
     - name: Reset Kubernetes
       shell: kubeadm reset --force
       register: reset_cluster
       ignore_errors: True
+      run_once: True
+      when: ansible_facts.services["kubelet.service"].state == "stopped"
 
 
+
+#
     - name: Initializing kubernetes
       register: init_cluster
-      when: reset_cluster is succeeded
+      run_once: True
       shell:
         kubeadm init --service-cidr {{ service_cidr }} \
           --pod-network-cidr {{ pod_network_cidr }} \
@@ -52,12 +73,14 @@
           --apiserver-advertise-address {{ master_ip }} \
           {{ kubeadm_opts }} \
           {{ init_opts }}
+      when: ansible_facts.services["kubelet.service"].state == "stopped"
 
 
     - name: Create Kubernetes config directory
       file:
         path: ".kube/"
         state: directory
+      when: init_cluster is succeeded
 
     - name: "Configuring kubectl for Root User"
       shell: mkdir -p $HOME/.kube;cp /etc/kubernetes/admin.conf $HOME/.kube/config;chown $(id -u):$(id -g) $HOME/.kube/config
@@ -78,14 +101,37 @@
       when: init_cluster is succeeded
 
     - name: Configuring single node cluster
-      shell: kubectl taint nodes --all node-role.kubernetes.io/master-
-
-
+      shell: kubectl taint nodes --all node-role.kubernetes.io/master- && sleep 20
+      ignore_errors: True
+#
+- hosts: master
+  become: yes
+  vars_files:
+    - group_vars/all.yml
+  gather_facts: yes
+  roles:
+    - { role: vault, tags: ['vault']}
+#
 - hosts: ubuntu
   become_user: root
   gather_facts: yes
   become: yes
-  tasks:
-    - name: Run Jenkins in a container
-      shell: docker run -d -p 8080:8080 jenkins/jenkins:lts
 
+  tasks:
+   - name: Check if docker is installed
+     shell: command -v docker >/dev/null 2>&1
+     register: is_docker_exist
+     ignore_errors: yes
+
+   - debug: var=is_docker_exist
+
+   - name: Installing Docker
+     include_role:
+        name: docker
+     when: is_docker_exist.rc > 0
+     tags: docker
+
+   - name: Run Jenkins in a container
+     shell: docker run -d -p 8080:8080 jenkins/jenkins:lts
+     ignore_errors: True
+#

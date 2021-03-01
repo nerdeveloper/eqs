@@ -17,7 +17,20 @@
     deb https://apt.kubernetes.io/ kubernetes-xenial main
     EOF
 
-- name: Installing Kubernetes
+- name: Disable system swap
+  shell: "swapoff -a"
+  run_once: True
+
+- name: Remove current swaps from fstab
+  lineinfile:
+    dest: /etc/fstab
+    regexp: '(?i)^([^#][\S]+\s+(none|swap)\s+swap.*)'
+    line: '# \1'
+    backrefs: yes
+    state: present
+  run_once: True
+
+- name: Installing Kubernetes Components
   apt:
     name: "{{ item }}"
     state: latest
