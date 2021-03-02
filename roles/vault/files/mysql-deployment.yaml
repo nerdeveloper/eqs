@@ -14,13 +14,12 @@ spec:
           app: mysql
         annotations:
           vault.hashicorp.com/agent-inject: "true"
-          vault.hashicorp.com/agent-inject-status: "update"
           vault.hashicorp.com/role: "internal-app"
           vault.hashicorp.com/agent-inject-secret-database-config: "internal/data/database/config"
           vault.hashicorp.com/agent-inject-template-database-config: |
             {{- with secret "internal/database/config" -}}
             {
-              "MYSQL_ROOT_PASSWORD" : "{{ .Data.data.password }}"
+              "MYSQL_ROOT_PASSWORD" : "{{ .Data.password }}"
             }
             {{- end }}
       spec:
@@ -43,3 +42,6 @@ spec:
           - name: mysql-persistent-storage
             persistentVolumeClaim:
               claimName: mysql-pv-claim
+
+
+
