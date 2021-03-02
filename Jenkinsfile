@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        SSH_KEY = credentials('cluster-ssh-key')
+        SSH_KEY = credentials('ssh-key')
     }
     stages {
         stage('Create Cluster') {
