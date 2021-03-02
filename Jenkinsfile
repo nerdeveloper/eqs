@@ -6,7 +6,7 @@ pipeline {
     stages {
         stage('Create Cluster') {
             steps {
-                sh "ansible-playbook playbook.yml -i inventory.ini -e ansible_ssh_private_key_file=$SSH_KEY -e ansible_python_interpreter=/usr/bin/python3
+                sh "ansible-playbook playbook.yml -i inventory.ini -e ansible_ssh_private_key_file=$SSH_KEY -e ansible_python_interpreter=/usr/bin/python3"
             }
         }
     }
