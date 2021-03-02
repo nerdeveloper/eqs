@@ -33,7 +33,7 @@ Vagrant.configure("2") do |config|
     ansible.groups = {
          "master" =>  ["kubernetes-master"],
          "ubuntu"  => ["ubuntu"],
-         "all:children" => ["master", "ubuntu"]
+         "all:children" => ["master"]
 
 
    }
