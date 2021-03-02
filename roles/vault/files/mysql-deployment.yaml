@@ -17,7 +17,7 @@ spec:
           vault.hashicorp.com/role: "internal-app"
           vault.hashicorp.com/agent-inject-secret-database-config: "internal/data/database/config"
           vault.hashicorp.com/agent-inject-template-database-config: |
-            {{- with secret "internal/database/config" -}}
+            {{- with secret "internal/data/database/config" -}}
             {
               "MYSQL_ROOT_PASSWORD" : "{{ .Data.password }}"
             }
