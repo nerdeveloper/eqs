@@ -1,4 +1,5 @@
 pipeline {
+    agent any
     environment {
         SSH_KEY = credentials('cluster-ssh-key')
     }
