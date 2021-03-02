@@ -1,5 +1,5 @@
 ---
-- hosts: kube-cluster
+- hosts: all
   become: yes
   gather_facts: yes
   tasks:
@@ -30,13 +30,13 @@
     - name: Installing Docker
       include_role:
         name: docker
-      when: is_docker_exist.rc != 0
+      when: is_docker_exist.rc > 0
       tags: docker
 #
     - name: Installing Kubernetes
       include_role:
         name: kubernetes
-      when: is_kubeadm_exist.rc != 0
+      when: is_kubeadm_exist.rc > 0
       tags: kubernetes
 
 - hosts: master
@@ -50,7 +50,7 @@
     - name: check service
       service_facts:
 
-    - name: try to work out how to access the service
+    - name: Checking the status of the Kubelet
       debug:
             var: ansible_facts.services["kubelet.service"]
     - name: Reset Kubernetes
@@ -70,7 +70,7 @@
         kubeadm init --service-cidr {{ service_cidr }} \
           --pod-network-cidr {{ pod_network_cidr }} \
           --token {{ token }} \
-          --apiserver-advertise-address {{ master_ip }} \
+          --apiserver-cert-extra-sans {{ master_ip }} \
           {{ kubeadm_opts }} \
           {{ init_opts }}
       when: ansible_facts.services["kubelet.service"].state == "stopped"
@@ -84,6 +84,9 @@
 
     - name: "Configuring kubectl for Root User"
       shell: mkdir -p $HOME/.kube;cp /etc/kubernetes/admin.conf $HOME/.kube/config;chown $(id -u):$(id -g) $HOME/.kube/config
+      ignore_errors: True
+
+
 
     - name: Copy admin.conf to Home directory
       when: init_cluster is succeeded
@@ -95,14 +98,39 @@
         mode: 0755
         remote_src: true
 
+    - name: Find Private IP and replace with Public IP
+      register: replace_ip
+      replace:
+          path: .kube/config
+          regexp: "{{ private_ip }}"
+          replace: "{{ master_ip }}"
+          backup: yes
+
+    - name: Copy Kubeconfig from Remote to Local
+      fetch:
+       src: .kube/config
+       dest: ./kubeconfig
+       flat: yes
+      when: replace_ip is succeeded
+      ignore_errors: True
+
+
     - name: Configuring Kubernetes Network
-      shell: |
-        kubectl apply -f  https://docs.projectcalico.org/v3.10/manifests/canal.yaml
+      command: "{{ item }}"
+      with_items:
+        - kubectl apply -f  https://docs.projectcalico.org/v3.10/manifests/canal.yaml
+        - sleep 20
       when: init_cluster is succeeded
 
     - name: Configuring single node cluster
-      shell: kubectl taint nodes --all node-role.kubernetes.io/master- && sleep 20
+      shell: kubectl taint nodes --all node-role.kubernetes.io/master-
       ignore_errors: True
+
+    - name: Installing Helm
+      script: scripts/helm.sh
+      ignore_errors: True
+
+
 #
 - hosts: master
   become: yes

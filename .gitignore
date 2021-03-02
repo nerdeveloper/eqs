@@ -9,3 +9,5 @@ out
 gen
 .vagrant
 ubuntu**
+devops-test-2021.pem
+kubeconfig
