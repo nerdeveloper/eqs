@@ -1,7 +1,4 @@
 pipeline {
-    agent {
-        docker { image 'ansible/ansible:ubuntu1604py3' }
-    }
     environment {
         SSH_KEY = credentials('cluster-ssh-key')
     }
