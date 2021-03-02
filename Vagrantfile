@@ -5,6 +5,7 @@ Vagrant.configure("2") do |config|
     master.vm.box = "ubuntu/bionic64"
     master.vm.hostname = "kubernetes-master"
     master.vm.network "public_network", ip: "192.168.0.17"
+    master.vm.network "private_network", ip: "10.0.2.10"
   end
 
   config.vm.define "ubuntu" do  |ubuntu|

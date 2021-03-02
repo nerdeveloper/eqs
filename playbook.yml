@@ -140,26 +140,3 @@
   roles:
     - { role: vault, tags: ['vault']}
 #
-- hosts: ubuntu
-  become_user: root
-  gather_facts: yes
-  become: yes
-
-  tasks:
-   - name: Check if docker is installed
-     shell: command -v docker >/dev/null 2>&1
-     register: is_docker_exist
-     ignore_errors: yes
-
-   - debug: var=is_docker_exist
-
-   - name: Installing Docker
-     include_role:
-        name: docker
-     when: is_docker_exist.rc > 0
-     tags: docker
-
-   - name: Run Jenkins in a container
-     shell: docker run -d -p 8080:8080 jenkins/jenkins:lts
-     ignore_errors: True
-#
