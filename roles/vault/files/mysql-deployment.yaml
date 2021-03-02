@@ -14,8 +14,14 @@ spec:
           app: mysql
         annotations:
           vault.hashicorp.com/agent-inject: "true"
+          vault.hashicorp.com/agent-inject-status: "update"
+          vault.hashicorp.com/agent-inject-secret-sendmail: "secret/sendmail-api"
+          vault.hashicorp.com/agent-inject-template-sendmail: |
+              {{- with secret "secret/sendmail-api" -}}
+              # smtp relay api key
+              APIKEY={{ .Data.data.APIKEY }}
+              {{- end }}
           vault.hashicorp.com/role: "internal-app"
-          vault.hashicorp.com/agent-inject-secret-database-config: "internal/data/database/config"
 
       spec:
         serviceAccountName: internal-app
