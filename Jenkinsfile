@@ -6,9 +6,7 @@ pipeline {
     stages {
         stage('Create Cluster') {
             steps {
-                sh "whoami"
-                sh "cp $SSH_KEY ./devops-test-2021.pem && chmod 400 devops-test-2021.pem"
-                sh "ansible-playbook playbook.yml -i inventory.ini"
+                sh "ansible-playbook playbook.yml -i inventory.ini -e ansible_ssh_private_key_file=$SSH_KEY"
             }
         }
     }
