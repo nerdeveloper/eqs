@@ -24,6 +24,7 @@ spec:
             }
             {{- end }}
       spec:
+        serviceAccountName: internal-app
         containers:
           - image: mysql:5.6
             name: mysql
