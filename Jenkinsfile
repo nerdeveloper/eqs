@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        SSH_KEY = credentials('cluster-ssh-key')
+         SSH_KEY = credentials('cluster-ssh-key')
          DOCKER_USERNAME = credentials('docker_username')
          DOCKER_PASS = credentials('docker_pass')
          IMAGE_NAME = 'jenkins'
