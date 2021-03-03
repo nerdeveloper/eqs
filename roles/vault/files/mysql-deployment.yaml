@@ -20,7 +20,7 @@ spec:
             vault.hashicorp.com/auth-path: "/auth/kubernetes"
             vault.hashicorp.com/agent-inject-template-database: |
               {{- with secret "secret/database" -}}
-              MYSQL_ROOT_PASSWORD={{ .Data.database }}
+              MYSQL_ROOT_PASSWORD={{ .Data.password }}
               {{- end }}
 
       spec:
