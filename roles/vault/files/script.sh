@@ -9,9 +9,9 @@ secret_name="$(kubectl get serviceaccount mysql -o go-template='{{ (index .secre
 # shellcheck disable=SC2034
 k8s_cacert="$(kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[].cluster.certificate-authority-data}' | base64 --decode)"
 
-tr_account_token="$(kubectl get secret mysql  -o go-template='{{ .data.token }}' | base64 --decode)"
+tr_account_token="$(kubectl get secret "${secret_name}" -o go-template='{{ .data.token }}' | base64 --decode)"
 
-kubectl exec -i vault-0 -- vault write auth/cluster-01/config token_reviewer_jwt="${tr_account_token}" kubernetes_host="${k8s_host}" kubernetes_ca_cert="${k8s_cacert}"
+kubectl exec -i vault-0 -- vault write auth/kubernetes/config token_reviewer_jwt="${tr_account_token}" kubernetes_host="${k8s_host}" kubernetes_ca_cert="${k8s_cacert}"
 
 kubectl exec -i vault-0 -- vault policy write mysql - <<EOH
 path "secret*" {
