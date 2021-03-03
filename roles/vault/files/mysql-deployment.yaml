@@ -14,6 +14,7 @@ spec:
           app: mysql
         annotations:
             vault.hashicorp.com/agent-inject: "true"
+            vault.hashicorp.com/agent-inject-status: "update"
             vault.hashicorp.com/agent-inject-secret-database: "secret/database"
             vault.hashicorp.com/role: "mysql"
             vault.hashicorp.com/auth-path: "/auth/kubernetes"
