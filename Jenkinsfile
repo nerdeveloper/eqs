@@ -14,7 +14,7 @@ pipeline {
         }
         stage('Push Baked Jenkins Image to Docker Hub') {
             steps {
-                 sh "docker build --pull --rm -f "Dockerfile" -t nerdeveloper/$IMAGE_NAME:$BUILD_NUMBER ."
+                 sh "docker build --pull --rm -t nerdeveloper/$IMAGE_NAME:$BUILD_NUMBER ."
                  sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASS"
                  sh "docker push nerdeveloper/$IMAGE_NAME:$BUILD_NUMBER"
             }
