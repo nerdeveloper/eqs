@@ -8,25 +8,33 @@
     - helm install vault vault/vault --atomic  --set "server.dev.enabled=true"
   ignore_errors: True
 
-
-- name: Creating secrets, Authentication, Service Accounts for MySQL POD and application for Kubernetes
-  script: files/script.sh
-  ignore_errors: True
-
 - name: "Create tmp directory"
   file:
     path: "{{ tmp_dir }}"
     state: directory
     mode: 0755
 
-- name: "Copy Mysql Deployment file"
+- name: "Copy Mysql Service Account file"
+  copy:
+    src: "sa.yaml"
+    dest: "{{ tmp_dir }}/sa.yaml"
+    mode: 0644
+
+- name: "Deploy mysql SA configuration"
+  shell: "kubectl apply -f {{ tmp_dir }}/sa.yaml"
+
+- name: Creating secrets, Authentication, for MySQL POD and application for Kubernetes
+  script: files/script.sh
+  ignore_errors: True
+
+
+
+- name: "Installing Deployment file"
   copy:
     src: "mysql-deployment.yaml"
     dest: "{{ tmp_dir }}/mysql-deployment.yaml"
     mode: 0644
 
-- name: "mysql configuration"
-  shell: "kubectl apply -f {{ tmp_dir }}/mysql-deployment.yaml"
 
 
 - name: Installing MySQL Service
@@ -54,6 +62,7 @@
     - "kubectl apply -f {{ tmp_dir }}/service.yaml"
     - "kubectl apply -f {{ tmp_dir }}/pv.yaml"
     - "kubectl apply -f {{ tmp_dir }}/pvc.yaml"
+    - "kubectl apply -f {{ tmp_dir }}/mysql-deployment.yaml"
   ignore_errors: True
 
 
