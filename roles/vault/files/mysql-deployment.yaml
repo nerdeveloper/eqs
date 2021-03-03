@@ -30,7 +30,7 @@ spec:
             name: mysql
             command: ["/entrypoint.sh"]
             args:
-              [ 'sh', '-c', '. /vault/secrets/database && mysqld']
+              [ 'sh', '-c', '. /vault/secrets/database && mysqld -u root -p $MYSQL_ROOT_PASSWORD']
 #            env:
 #              # Use secret in real usage
 #              - name: MYSQL_ROOT_PASSWORD
