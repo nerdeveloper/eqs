@@ -1,5 +1,5 @@
 kubectl exec -it vault-0 -- vault secrets enable -path=secret kv-v2
-kubectl exec -it vault-0 -- vault kv put secret/database password="admin"
+kubectl exec -it vault-0 -- vault kv put secret/database password="admin" username="admin"
 kubectl exec -it vault-0 -- vault kv get secret/database
 kubectl exec -it vault-0 -- vault auth enable kubernetes
 # shellcheck disable=SC2034
