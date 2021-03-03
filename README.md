@@ -48,4 +48,6 @@ cd eqs
 ansible-playbook playbook.yml -i inventory.ini
 ```
 
+## Jenkins Server
 
+http://34.211.35.162:8080/job/kubernetes-cluster/
