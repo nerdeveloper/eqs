@@ -17,10 +17,10 @@ spec:
             vault.hashicorp.com/agent-inject-secret-database: "secret/database"
             vault.hashicorp.com/role: "mysql"
             vault.hashicorp.com/auth-path: "/auth/kubernetes"
-            vault.hashicorp.com/agent-inject-template-database: |
-              {{- with secret "secret/database" -}}
-                MYSQL_ROOT_PASSWORD={{ .Data.data.database }}
-              {{- end }}
+#            vault.hashicorp.com/agent-inject-template-database: |
+#              {{- with secret "secret/database" -}}
+#                MYSQL_ROOT_PASSWORD={{ .Data.data.database }}
+#              {{- end }}
 
       spec:
         serviceAccountName: mysql
